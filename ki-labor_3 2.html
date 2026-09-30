@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KI-Labor</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#F2F2F7;--fg:#1C1C1E;--mut:#636366;--card:#fff;--line:rgba(60,60,67,.16);--fill:rgba(118,118,128,.12);--acc:#4F46E5;--acc2:#4338CA;--on:#fff;--x:#EA580C;--o:#4F46E5;--sh:0 0 0 1px rgba(0,0,0,.04),0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06);--out:oklch(0 0 0/.1)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--fg:#F2F2F7;--mut:#A1A1AA;--card:#1C1C1E;--line:rgba(235,235,245,.16);--fill:rgba(118,118,128,.24);--acc:#818CF8;--acc2:#A5B4FC;--on:#0F172A;--x:#FB923C;--o:#818CF8;--sh:0 0 0 1px rgba(255,255,255,.08);--out:oklch(1 0 0/.1)}}
+:root[data-theme="dark"]{--bg:#000;--fg:#F2F2F7;--mut:#A1A1AA;--card:#1C1C1E;--line:rgba(235,235,245,.16);--fill:rgba(118,118,128,.24);--acc:#818CF8;--acc2:#A5B4FC;--on:#0F172A;--x:#FB923C;--o:#818CF8;--sh:0 0 0 1px rgba(255,255,255,.08);--out:oklch(1 0 0/.1)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-size:1.4rem;margin:0}h2{font-size:1.1rem;margin:0 0 8px}
+.mut,small{color:var(--mut)}.mut{font-size:.85rem;line-height:1.5;margin:4px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{flex:1;font:inherit;font-size:.85rem;padding:9px 6px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;min-width:0}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.score{display:flex;justify-content:space-around;text-align:center;margin-bottom:8px}
+.score b{display:block;font-size:1.5rem}.score span{font-size:.75rem;color:var(--mut)}
+#status{text-align:center;font-weight:600;min-height:1.5em;margin-bottom:8px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.c4{display:grid;gap:4px;margin-top:6px}.c4cell{aspect-ratio:1;border-radius:50%;background:var(--bg);border:1px solid var(--line)}.c4cell.X{background:var(--x)}.c4cell.O{background:var(--o)}
+.cell{aspect-ratio:1;border:0;border-radius:12px;background:var(--bg);color:var(--fg);font:inherit;font-size:3rem;font-weight:700;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cell:disabled{cursor:default}.cell.X{color:var(--x)}.cell.O{color:var(--o)}.cell.win{outline:3px solid var(--acc)}
+.cell .v{position:absolute;bottom:3px;font-size:.68rem;font-weight:500;color:var(--mut)}
+.sticks{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;min-height:44px;margin-bottom:10px}
+.sticks i{width:9px;height:40px;border-radius:3px;background:var(--acc)}
+.row{display:flex;gap:8px}
+.btn{font:inherit;font-weight:600;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;flex:1}
+.btn.big{font-size:2rem}.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}.btn:disabled{opacity:.55}
+div.big{font-size:2rem;text-align:center;margin:6px 0}
+label{font-size:.85rem;color:var(--mut);display:flex;gap:8px;align-items:center;margin-top:10px}
+canvas{width:100%;display:block;margin-bottom:10px}
+.qt{display:flex;flex-direction:column;gap:6px}
+.qr{display:flex;gap:10px;align-items:center}
+.qs{width:70px;font-size:.85rem;white-space:pre;line-height:1.1;text-align:center}
+.qg{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.qg span{font-size:.7rem;text-align:center;padding:3px 0;border-radius:4px;background:var(--bg)}
+pre{background:var(--bg);border-radius:10px;padding:10px;font-size:.72rem;line-height:1.45;overflow-x:auto;max-height:340px;margin:8px 0}
+.tiny{font:inherit;font-size:.78rem;color:var(--mut);background:none;border:0;text-decoration:underline;cursor:pointer}
+code{background:var(--bg);padding:1px 5px;border-radius:5px}
+.bar{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;width:0;background:var(--acc)}
+/* Design: "Neural Glass" — Aurora-Hintergrund, Partikelnetz, Glas-Karten, Verlaufs-Akzente */
+:root{--bg:#EEF0FF;--fg:#14142B;--mut:#54557A;--card:rgba(255,255,255,.7);--line:rgba(109,94,245,.2);--fill:rgba(109,94,245,.08);--acc:#6D5EF5;--acc2:#5B4BE0;--x:#F97316;--o:#0891B2;--sh:0 10px 40px rgba(109,94,245,.16);--g1:rgba(139,92,246,.35);--g2:rgba(34,211,238,.28);--g3:rgba(236,72,153,.18);--grad:linear-gradient(135deg,#6D5EF5,#9333EA)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07071A;--fg:#EEF0FF;--mut:#A3A6D0;--card:rgba(20,20,54,.62);--line:rgba(139,140,255,.22);--fill:rgba(139,140,255,.11);--acc:#9B8CFF;--acc2:#B7ACFF;--x:#FB923C;--o:#22D3EE;--sh:0 10px 40px rgba(0,0,0,.45);--g1:rgba(124,92,255,.32);--g2:rgba(34,211,238,.16);--g3:rgba(236,72,153,.16)}}
+:root[data-theme="dark"]{--bg:#07071A;--fg:#EEF0FF;--mut:#A3A6D0;--card:rgba(20,20,54,.62);--line:rgba(139,140,255,.22);--fill:rgba(139,140,255,.11);--acc:#9B8CFF;--acc2:#B7ACFF;--x:#FB923C;--o:#22D3EE;--sh:0 10px 40px rgba(0,0,0,.45);--g1:rgba(124,92,255,.32);--g2:rgba(34,211,238,.16);--g3:rgba(236,72,153,.16)}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;padding:20px 16px 40px;position:relative;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:-10%;z-index:-2;background:radial-gradient(45% 35% at 15% 8%,var(--g1),transparent 70%),radial-gradient(40% 35% at 90% 30%,var(--g2),transparent 70%),radial-gradient(45% 40% at 40% 100%,var(--g3),transparent 70%);transform:translateY(calc(var(--sy,0)*-.08px));will-change:transform}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;border:0;border-radius:0;background:none;outline:0;margin:0}
+main{position:relative;gap:16px;max-width:540px}
+.chip{display:inline-flex;align-items:center;gap:8px;font-size:.75rem;font-weight:600;letter-spacing:.02em;color:var(--mut);padding:5px 12px;border-radius:99px;background:var(--fill);border:1px solid var(--line);margin-bottom:10px}
+.chip i{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0 rgba(34,197,94,.6);animation:pulse 2s ease-out infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}
+h1{font-size:clamp(2.3rem,9vw,3rem);font-weight:800;letter-spacing:-.035em;line-height:1.05;background:linear-gradient(110deg,var(--fg) 10%,var(--acc) 55%,var(--o));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:1.15rem;font-weight:700;letter-spacing:-.01em}
+.mut{font-size:.9rem;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.12);backdrop-filter:blur(20px) saturate(150%);-webkit-backdrop-filter:blur(20px) saturate(150%)}
+.tabs{gap:4px;padding:4px;border-radius:18px;background:var(--fill);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tabs button{flex:1 1 auto;white-space:nowrap;padding:6px 12px;border:0;background:transparent;color:var(--mut);border-radius:14px;min-height:40px;font-weight:600;font-size:.83rem;cursor:pointer;transition:background-color .2s ease-out,color .2s ease-out,box-shadow .2s ease-out,scale .15s ease-out}
+.tabs button:hover:not(.on){color:var(--fg);background:var(--fill)}
+.tabs button:active{scale:.96}
+.tabs button.on{background:var(--grad);color:#fff;box-shadow:0 6px 18px rgba(109,94,245,.45)}
+.btn{min-height:44px;border:1px solid var(--line);border-radius:14px;background:var(--fill);color:var(--fg);font-weight:600;cursor:pointer;transition:background-color .2s ease-out,border-color .2s ease-out,box-shadow .2s ease-out,translate .2s ease-out,scale .15s ease-out}
+.btn:hover{border-color:var(--acc);translate:0 -1px}.btn:active{scale:.96;translate:0}
+.btn.primary{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 20px rgba(109,94,245,.4)}
+.btn.primary:hover{box-shadow:0 8px 26px rgba(147,51,234,.55)}
+.btn:disabled{opacity:.45;translate:0}
+.score{padding:6px 0 10px}.score b{font-size:2rem;font-weight:800;font-variant-numeric:tabular-nums;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.score span{text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;font-weight:600}
+#status{font-weight:700;letter-spacing:.01em}
+.cell,.c4cell{background:var(--fill);border:1px solid var(--line)}
+.cell{border-radius:18px;transition:background-color .2s ease-out,translate .2s ease-out,box-shadow .2s ease-out}
+.cell:not(:disabled):hover{background:var(--card);translate:0 -2px;box-shadow:0 8px 20px rgba(109,94,245,.25)}
+.cell.X{color:var(--x);text-shadow:0 0 22px var(--x)}.cell.O{color:var(--o);text-shadow:0 0 22px var(--o)}
+.cell.win{outline:0;box-shadow:0 0 0 2px var(--acc),0 0 28px rgba(139,92,246,.6);background:var(--card)}
+.c4cell{box-shadow:inset 0 3px 6px rgba(0,0,0,.18);transition:background-color .25s ease-out}
+.c4cell.X{background:radial-gradient(circle at 35% 30%,#fff8,transparent 45%),var(--x);box-shadow:0 0 14px var(--x)}
+.c4cell.O{background:radial-gradient(circle at 35% 30%,#fff8,transparent 45%),var(--o);box-shadow:0 0 14px var(--o)}
+.sticks i{background:linear-gradient(180deg,var(--o),var(--acc));box-shadow:0 0 12px rgba(139,124,255,.5);border-radius:5px}
+.bar{height:8px;border-radius:4px;background:var(--fill)}.bar i{border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--o));box-shadow:0 0 12px rgba(139,124,255,.6);transition:width .25s ease-out}
+.qg span{border-radius:6px;background:var(--fill)}
+canvas:not(#bg){border-radius:16px;background:var(--fill);border:1px solid var(--line)}
+pre{background:var(--fill);border:1px solid var(--line);border-radius:14px}
+textarea,input:not([type]),input[type=text]{border:1px solid var(--line)!important;border-radius:12px!important;background:var(--fill)!important;color:var(--fg);padding:10px 12px!important;transition:border-color .2s ease-out,box-shadow .2s ease-out}
+textarea:focus,input:focus{outline:0;border-color:var(--acc)!important;box-shadow:0 0 0 3px rgba(139,124,255,.25)}
+input[type=range],input[type=checkbox]{accent-color:var(--acc)}input[type=checkbox]{width:20px;height:20px}
+.tiny{min-height:32px;color:var(--acc);text-decoration:none;font-weight:600}
+#themeBtn{min-width:44px;min-height:44px;color:var(--fg);display:inline-flex;align-items:center;justify-content:center;border-radius:14px;background:var(--fill);border:1px solid var(--line)}
+.mut a,footer a{color:var(--acc)}
+.lg{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:2px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.rv{opacity:0;transform:translateY(20px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<main>
+<div><div class="chip"><i></i>Läuft lokal · nichts verlässt deinen Browser</div><div style="display:flex;justify-content:space-between;align-items:center"><h1>KI-Labor</h1><button id="themeBtn" class="tiny" onclick="cycleTheme()" title="Hell/Dunkel umschalten" aria-label="Hell/Dunkel umschalten"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg></button></div>
+<p class="mut">Vier Spiele und vier weitere Werkzeuge, alle mit lernender oder suchender KI. Alles läuft lokal im Browser, nichts wird irgendwohin gesendet. Darunter siehst du Lernkurven, das Gehirn der KI, die Trainingsdaten und den Quellcode.</p></div>
+<div class="tabs" id="gt"><button data-g="ttt" onclick="sg('ttt')">Tic-Tac-Toe</button><button data-g="nim" onclick="sg('nim')">Nim</button><button data-g="rps" onclick="sg('rps')">Schere-Stein-Papier</button><button data-g="c4" onclick="sg('c4')">4 Gewinnt</button></div>
+
+<div class="card">
+<div class="score"><div><b id="s1">0</b><span>Du</span></div><div><b id="s2">0</b><span>Remis</span></div><div><b id="s3">0</b><span>KI</span></div></div>
+<div id="status"></div><div id="game"></div>
+<p class="mut" id="info"></p>
+<label><input type="checkbox" id="hints" checked onchange="paint()"> Gedanken der KI zeigen (Zahlen = erwarteter Ertrag, −1 schlecht bis +1 gut)</label>
+</div>
+
+<div class="card"><h2>Training</h2>
+<div class="row" id="algSel"></div>
+<div class="row" id="tb"></div><div class="bar"><i id="bar"></i></div><p class="mut" id="tp">Mehr Episoden = klügere KI. Du kannst jederzeit stoppen.</p>
+<div class="row"><button class="btn" onclick="ng()">Neue Runde</button><button class="btn" id="rb" onclick="rst()">🗑 Gehirn löschen</button></div>
+<div class="row" style="margin-top:8px"><button class="btn" onclick="exportBrain()">💾 Export</button><label class="btn" style="text-align:center;margin:0">📂 Import<input type="file" accept="application/json" style="display:none" onchange="importBrain(this)"></label></div></div>
+
+<div class="tabs" id="pt"><button data-t="c" onclick="st_('c')">Kurven</button><button data-t="q" onclick="st_('q')">Q-Tabelle</button><button data-t="d" onclick="st_('d')">Daten</button><button data-t="m" onclick="st_('m')">Modell</button></div>
+<div class="card" id="panel"></div>
+
+<div><h2>Weitere KI-Werkzeuge</h2><p class="mut">Vier ganz andere Prinzipien, und alle sind echte KI: ein neuronales Netz (Textvorhersage), Evolution (entwickelt Texte oder neuronale Netze), und zwei weitere: die A*-Wegfindung (klassische KI-Suche) und ein Q-Learning-Agent, der eine Schlange steuert.</p></div>
+<div class="tabs" id="toolTabs"><button data-tool="mk" onclick="stool('mk')">Textvorhersage</button><button data-tool="ga" onclick="stool('ga')">Evolution</button><button data-tool="path" onclick="stool('path')">Wegfindung</button><button data-tool="sn" onclick="stool('sn')">Schlange</button></div>
+<div class="card" id="toolPanel"></div>
+
+<footer style="text-align:center;padding:10px 0 4px"><small class="mut">© Titus Wagner · <a href="https://talos-val.github.io/project-data" style="color:var(--mut)">talos-val.github.io/project-data</a></small></footer>
+</main>
+
+<!-- MODELL: dieser Block wird ausgeführt UND im Tab "Modell" als Quelltext angezeigt -->
+<script id="modelcode">
+class QAgent{
+  constructor(n,gamma,adapt){this.n=n;this.gamma=gamma;this.adapt=adapt;this.alpha=.35;this.Q={};this.N={};this.alg='q'}
+  row(s){return this.Q[s]||(this.Q[s]=new Array(this.n).fill(0))}
+  // ε-greedy: mit Wahrscheinlichkeit eps zufällig, sonst beste bekannte Aktion
+  act(s,legal,eps){
+    if(Math.random()<eps)return legal[Math.floor(Math.random()*legal.length)];
+    const r=this.row(s),m=Math.max(...legal.map(a=>r[a]));
+    const best=legal.filter(a=>Math.abs(r[a]-m)<1e-9);
+    return best[Math.floor(Math.random()*best.length)]}
+  // Q(s,a) += α·(Ziel − Q(s,a)),  Ziel = r + sign·γ·max Q(s',a')
+  // sign=-1: Zweispieler (Negamax: der Gegner ist am Zug), sign=0: kein Bootstrapping
+  // nextA: die tatsächlich nächste gewählte Aktion, nur für SARSA gebraucht
+  update(s,a,r,s2,legal2,sign,nextA){
+    const row=this.row(s),n=this.N[s]=(this.N[s]||0)+1,al=this.adapt?Math.max(.05,1/Math.sqrt(n)):this.alpha; // adaptive Lernrate 1/√n
+    let target=r;
+    if(s2!==null&&sign!==0){const r2=this.row(s2);
+      const boot=(this.alg==='sarsa'&&nextA!=null)?r2[nextA]:Math.max(...legal2.map(j=>r2[j])); // Q-Learning: max, SARSA: tatsächliche Folgeaktion
+      target+=sign*this.gamma*boot}
+    row[a]+=al*(target-row[a])}
+}
+// Nach jeder Partie rückwärts lernen. Drei austauschbare Lernregeln fürs selbe Q[s][a]:
+//  Q-Learning (off-policy, TD): bootstrapped mit dem Maximum der Folgezustände
+//  SARSA (on-policy, TD): bootstrapped mit der tatsächlich gespielten Folgeaktion
+//  Monte-Carlo-Control: kein Bootstrapping, lernt erst am Ende mit dem echten Ertrag G der ganzen Partie
+function learn(agent,hist){
+  if(agent.alg==='mc'){let G=0;for(let i=hist.length-1;i>=0;i--){const t=hist[i];G=t.r-agent.gamma*G;agent.update(t.s,t.a,G,null,null,0)}return}
+  for(let i=hist.length-1;i>=0;i--){const t=hist[i],nextA=(agent.alg==='sarsa'&&i+1<hist.length)?hist[i+1].a:null;agent.update(t.s,t.a,t.r,t.s2,t.l2,-1,nextA)}
+}
+// Einzelspieler-Variante: kein Gegner, also kein Perspektivwechsel -> sign=+1 statt -1 (sonst identische Lernregeln)
+function learnSP(agent,hist){
+  if(agent.alg==='mc'){let G=0;for(let i=hist.length-1;i>=0;i--){const t=hist[i];G=t.r+agent.gamma*G;agent.update(t.s,t.a,G,null,null,0)}return}
+  for(let i=hist.length-1;i>=0;i--){const t=hist[i],nextA=(agent.alg==='sarsa'&&i+1<hist.length)?hist[i+1].a:null;agent.update(t.s,t.a,t.r,t.s2,t.l2,1,nextA)}
+}
+</script>
+
+<!-- NEUROEVOLUTION (Genetischer Algorithmus + Neuronale Netze): ausgeführt UND im Werkzeug-Tab als Quelltext angezeigt -->
+<script id="gacode">
+// Neuroevolution (unten Text-Evolution): Die Gewichte eines kleinen neuronalen Netzes (2 Eingänge, 6 versteckte Neuronen, 1 Ausgang) sind das "Erbgut".
+const GANN={h:6};
+function gaLen(){return GANN.h*4+1} // pro Neuron: 2 Gewichte + Bias, dazu Ausgangsgewichte + Bias
+function gaRandW(){return Array.from({length:gaLen()},()=>(Math.random()*2-1)*2)}
+function gaRandn(){return Math.sqrt(-2*Math.log(1-Math.random()))*Math.cos(2*Math.PI*Math.random())}
+function gaOut(w,x,y){const H=GANN.h;let o=w[H*4];for(let j=0;j<H;j++)o+=w[H*3+j]*Math.tanh(w[j*3]*x+w[j*3+1]*y+w[j*3+2]);return 1/(1+Math.exp(-o))}
+// Aufgabe: 64 Punkte auf einem Raster, jeder gehört zu Klasse 0 oder 1
+function gaPoints(task){const p=[];for(let i=0;i<8;i++)for(let j=0;j<8;j++){const x=(i+.5)/4-1,y=(j+.5)/4-1,
+  t=task==='xor'?(x*y>0?1:0):task==='circle'?(x*x+y*y<.45?1:0):(Math.abs(x)<.4?1:0);p.push({x,y,t})}return p}
+// Fitness = 1 − 4·mittlerer quadratischer Fehler (1 = alle Punkte perfekt, 0 = nur geraten)
+function gaFit(w,pts){let e=0;for(const p of pts){const d=gaOut(w,p.x,p.y)-p.t;e+=d*d}return 1-4*e/pts.length}
+function gaAcc(w,pts){return pts.filter(p=>(gaOut(w,p.x,p.y)>.5?1:0)===p.t).length/pts.length}
+// Turnierauswahl: zwei zufällige Netze, das fittere gewinnt
+function gaSelect(pop,fits){const a=Math.floor(Math.random()*pop.length),b=Math.floor(Math.random()*pop.length);return fits[a]>=fits[b]?pop[a]:pop[b]}
+function gaCross(a,b){return a.map((v,i)=>Math.random()<.5?v:b[i])} // gleichverteiltes Crossover der Gewichte
+function gaMutate(w,rate){return w.map(v=>Math.random()<rate?v+gaRandn()*.5:v)} // Gauß-Mutation
+// --- Text-Evolution: Zeichenketten als Individuen ---
+function gaRandChar(){return String.fromCharCode(32+Math.floor(Math.random()*95))} // druckbare ASCII-Zeichen
+function gaRandStr(n){return Array.from({length:n},gaRandChar).join('')}
+function gaFitT(s,target){let f=0;for(let i=0;i<target.length;i++)if(s[i]===target[i])f++;return f/target.length} // Anteil richtiger Zeichen
+function gaCrossT(a,b){const i=Math.floor(Math.random()*a.length);return a.slice(0,i)+b.slice(i)} // Ein-Punkt-Crossover
+function gaMutateT(s,rate){return[...s].map(c=>Math.random()<rate?gaRandChar():c).join('')}
+</script>
+
+<!-- WEGFINDUNG (Q-Learning): ausgeführt UND im Werkzeug-Tab als Quelltext angezeigt -->
+<script id="pathcode">
+const PFDIRS=[{dx:0,dy:-1},{dx:0,dy:1},{dx:-1,dy:0},{dx:1,dy:0}]; // oben, unten, links, rechts
+function pfLegalIdx(i,cols,rows,walls){const r=Math.floor(i/cols),c=i%cols,out=[];
+  PFDIRS.forEach((d,a)=>{const nr=r+d.dy,nc=c+d.dx;if(nr>=0&&nr<rows&&nc>=0&&nc<cols&&!walls.has(nr*cols+nc))out.push(a)});
+  return out}
+function pfMoveIdx(i,a,cols){const r=Math.floor(i/cols),c=i%cols,d=PFDIRS[a];return(r+d.dy)*cols+(c+d.dx)}
+// A*: g = bisherige Schritte, h = Luftlinie (Manhattan) bis zum Ziel, f = g + h.
+// Immer das offene Feld mit dem kleinsten f untersuchen. Mit useH=false (h=0) wird daraus Dijkstra.
+// Rückgabe: ev = Reihenfolge der Untersuchungen (zum Animieren), path = kürzester Weg oder null.
+function pfAStar(start,goal,walls,cols,rows,useH){
+  const gr=Math.floor(goal/cols),gc=goal%cols,h=i=>useH?Math.abs(Math.floor(i/cols)-gr)+Math.abs(i%cols-gc):0;
+  const g={[start]:0},par={},open=[start],closed=new Set(),ev=[];
+  while(open.length){
+    let bi=0;for(let k=1;k<open.length;k++){const a=open[k],b=open[bi],fa=g[a]+h(a),fb=g[b]+h(b);if(fa<fb||(fa===fb&&h(a)<h(b)))bi=k}
+    const i=open.splice(bi,1)[0];if(closed.has(i))continue;closed.add(i);const added=[];
+    if(i===goal){const path=[i];let p=i;while(p!==start){p=par[p];path.push(p)}ev.push({cur:i,added});return{ev,path:path.reverse()}}
+    for(const a of pfLegalIdx(i,cols,rows,walls)){const n=pfMoveIdx(i,a,cols),ng=g[i]+1;
+      if(closed.has(n))continue;if(g[n]===undefined||ng<g[n]){g[n]=ng;par[n]=i;open.push(n);added.push(n)}}
+    ev.push({cur:i,added})}
+  return{ev,path:null}
+}
+// Zufälliges Labyrinth, das garantiert lösbar ist
+function pfMakeWalls(cols,rows,start,goal,p){for(let t=0;t<50;t++){const w=new Set();
+  for(let i=0;i<cols*rows;i++)if(i!==start&&i!==goal&&Math.random()<p)w.add(i);
+  if(pfAStar(start,goal,w,cols,rows,true).path)return w}return new Set()}
+</script>
+
+<!-- AUTONOME SCHLANGE (Q-Learning): ausgeführt UND im Werkzeug-Tab als Quelltext angezeigt -->
+<script id="sncode">
+const SNDIRS4=[{x:0,y:-1},{x:1,y:0},{x:0,y:1},{x:-1,y:0}]; // oben, rechts, unten, links (im Uhrzeigersinn)
+function snOccupied(snake,x,y,cols,rows){if(x<0||y<0||x>=cols||y>=rows)return true;return snake.some(s=>s.x===x&&s.y===y)}
+function snTurn(dirIdx,a){return a===1?(dirIdx+1)%4:a===2?(dirIdx+3)%4:dirIdx} // 0=geradeaus,1=rechts,2=links
+// Zustand: 11 Bits — Gefahr geradeaus/rechts/links, aktuelle Richtung, Futter links/rechts/oben/unten.
+// Kein Zufall dabei: dieselbe Situation ergibt immer denselben Zustands-Schlüssel, darüber lernt die Tabelle.
+function snState(snake,food,dirIdx,cols,rows){
+  const head=snake[0],d=SNDIRS4[dirIdx],rd=SNDIRS4[(dirIdx+1)%4],ld=SNDIRS4[(dirIdx+3)%4];
+  const dang=(dx,dy)=>snOccupied(snake,head.x+dx,head.y+dy,cols,rows)?1:0;
+  return[dang(d.x,d.y),dang(rd.x,rd.y),dang(ld.x,ld.y),
+    dirIdx===3?1:0,dirIdx===1?1:0,dirIdx===0?1:0,dirIdx===2?1:0,
+    food.x<head.x?1:0,food.x>head.x?1:0,food.y<head.y?1:0,food.y>head.y?1:0].join('')}
+function snStartSnake(cols,rows){const cx=Math.floor(cols/2),cy=Math.floor(rows/2);return[{x:cx-1,y:cy},{x:cx-2,y:cy},{x:cx-3,y:cy}]}
+function snRandFood(snake,cols,rows){let p;do{p={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));return p}
+// Ein Schritt: dreht relativ zur aktuellen Richtung, prüft Kollision, frisst ggf. Futter.
+// Belohnung: +10 Futter, −10 Tod, −0.05 pro Schritt sonst (drängt zu kurzen, zielgerichteten Wegen statt Kreisen).
+function snApplyStep(snake,food,dirIdx,a,cols,rows){
+  const ndir=snTurn(dirIdx,a),d=SNDIRS4[ndir],head=snake[0],nx=head.x+d.x,ny=head.y+d.y;
+  if(nx<0||ny<0||nx>=cols||ny>=rows||snake.some(s=>s.x===nx&&s.y===ny))return{snake,food,dirIdx:ndir,r:-10,dead:true,ate:false};
+  const newHead={x:nx,y:ny};let ns=[newHead,...snake],ate=false,nf=food;
+  if(nx===food.x&&ny===food.y){ate=true;nf=snRandFood(ns,cols,rows)}else ns.pop();
+  return{snake:ns,food:nf,dirIdx:ndir,r:ate?10:-.05,dead:false,ate}}
+// Eine komplette Partie im Kopf durchspielen (ohne zu zeichnen) und danach in einem Rutsch daraus lernen
+function snEpisode(agent,cols,rows,eps,maxSteps){
+  let snake=snStartSnake(cols,rows),dirIdx=1,food=snRandFood(snake,cols,rows),steps=0,score=0;const h=[];
+  while(steps<maxSteps){
+    const s=snState(snake,food,dirIdx,cols,rows),a=agent.act(s,[0,1,2],eps);
+    const res=snApplyStep(snake,food,dirIdx,a,cols,rows);steps++;
+    if(res.dead){h.push({s,a,s2:null,l2:null,r:res.r});break}
+    if(res.ate)score++;
+    const s2=snState(res.snake,res.food,res.dirIdx,cols,rows);
+    h.push({s,a,s2,l2:[0,1,2],r:res.r});
+    snake=res.snake;food=res.food;dirIdx=res.dirIdx}
+  learnSP(agent,h);return{score,steps}}
+</script>
+
+<!-- TEXTVORHERSAGE (Neuronales Netz): ausgeführt UND im Werkzeug-Tab als Quelltext angezeigt -->
+<script id="mkcode">
+// Kleines neuronales Netz als Sprachmodell: Kontext (letzte n Zeichen, one-hot) -> versteckte Schicht (tanh) -> Softmax über alle Zeichen
+class NeuralLM{
+  constructor(order,H){this.order=order;this.H=H||24;this.chars=[];this.V=0;this.loss=null;this.epochs=0}
+  // Vorwärtslauf: Kontext (Zeichen-Indizes) -> Wahrscheinlichkeit für jedes mögliche nächste Zeichen
+  fwd(ctx){const{H,V}=this,h=new Array(H),z=new Array(V);
+    for(let j=0;j<H;j++){let a=this.b1[j];for(let t=0;t<ctx.length;t++)a+=this.W1[j][t*V+ctx[t]];h[j]=Math.tanh(a)}
+    let m=-1e9;for(let k=0;k<V;k++){let a=this.b2[k];for(let j=0;j<H;j++)a+=this.W2[k][j]*h[j];z[k]=a;if(a>m)m=a}
+    let s=0;for(let k=0;k<V;k++){z[k]=Math.exp(z[k]-m);s+=z[k]}
+    return{h,p:z.map(v=>v/s)}}
+  // Training: Gradientenabstieg (Backpropagation) auf dem Kreuzentropie-Fehler
+  fit(text,epochs){
+    this.chars=[...new Set(text)].sort();const V=this.V=this.chars.length,H=this.H,o=this.order;this.loss=null;this.epochs=0;
+    if(!V||text.length<=o)return;
+    const r=()=>(Math.random()-.5)*.5,idx=[...text].map(c=>this.chars.indexOf(c));
+    this.W1=Array.from({length:H},()=>Array.from({length:o*V},r));this.b1=new Array(H).fill(0);
+    this.W2=Array.from({length:V},()=>Array.from({length:H},r));this.b2=new Array(V).fill(0);
+    const n=idx.length-o,E=epochs||Math.min(300,Math.max(40,Math.round(60000/n)));
+    for(let e=0;e<E;e++){const lr=.2*(1-e/E)+.02;let L=0;
+      for(let i=0;i<n;i++){const ctx=idx.slice(i,i+o),y=idx[i+o],{h,p}=this.fwd(ctx);L-=Math.log(p[y]+1e-9);
+        const dz=p.slice();dz[y]-=1;const dh=new Array(H).fill(0);
+        for(let k=0;k<V;k++){for(let j=0;j<H;j++){dh[j]+=this.W2[k][j]*dz[k];this.W2[k][j]-=lr*dz[k]*h[j]}this.b2[k]-=lr*dz[k]}
+        for(let j=0;j<H;j++){const d=dh[j]*(1-h[j]*h[j]);this.b1[j]-=lr*d;for(let t=0;t<o;t++)this.W1[j][t*V+ctx[t]]-=lr*d}}
+      this.loss=L/n}
+    this.epochs=E}
+  params(){return this.V?this.H*this.order*this.V+this.H+this.V*this.H+this.V:0}
+  dist(k){if(!this.V)return null;const a=[...k].slice(-this.order);if(a.length<this.order)return null;
+    const ctx=a.map(c=>this.chars.indexOf(c));if(ctx.some(i=>i<0))return null;
+    return this.fwd(ctx).p.map((p,i)=>[this.chars[i],p]).sort((x,y)=>y[1]-x[1])}
+  sample(k){const d=this.dist(k);if(!d)return null;let r=Math.random(),acc=0;for(const[c,p]of d){acc+=p;if(r<=acc)return c}return d[0][0]}
+  generate(seed,n){let s=[...seed].slice(-this.order),out='';for(let i=0;i<n;i++){const c=this.sample(s.join(''));if(!c)break;out+=c;s=[...s.slice(1),c]}return out}
+}
+const mk=new NeuralLM(2);
+</script>
+
+<script>
+const $=id=>document.getElementById(id),KEY='ai-lab-v2',IC=['✊','✋','✌️'];
+const NAMES={ttt:'Tic-Tac-Toe',nim:'Nim',rps:'Schere-Stein-Papier',c4:'4 Gewinnt'};
+const INFO={ttt:'Zustand = Brett aus Sicht des Zugspielers. 3 in einer Reihe gewinnt.',nim:'21 Hölzer, abwechselnd 1–3 nehmen, wer das letzte nimmt, gewinnt. Die KI entdeckt selbst die Regel „Hinterlasse ein Vielfaches von 4“.',rps:'Die KI merkt sich deine letzten 2 Züge und lernt, was du als Nächstes spielst. Wer Muster hat, verliert.',c4:'5×4-Feld. Wirf oben in eine Spalte, dein Stück fällt nach unten. Wer zuerst 4 in einer Reihe hat (waagrecht, senkrecht oder diagonal), gewinnt. Viel größerer Zustandsraum als Tic-Tac-Toe — die KI braucht deutlich mehr Training.'};
+const TRAIN={ttt:'🚀 Selbsttraining (3.000 Spiele)',nim:'🚀 Selbsttraining (1.500 Spiele)',rps:'🎯 Gegen Muster-Bot trainieren (500 Runden)'};
+const ACT={ttt:'Raster = Felder 1–9 · ✕ = Zugspieler',nim:'Spalten = Nimm 1 | 2 | 3',rps:'Spalten = KI spielt ✊ | ✋ | ✌️',c4:'Spalten = Wurfposition 1–5'};
+const L=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const SYM=(()=>{const R=[6,3,0,7,4,1,8,5,2],F=[2,1,0,5,4,3,8,7,6],o=[];for(let f=0;f<2;f++){let t=[0,1,2,3,4,5,6,7,8].map(i=>f?F[i]:i);for(let r=0;r<4;r++){o.push(t);t=t.map(i=>R[i])}}return o})();
+// Symmetrie: Drehungen/Spiegelungen des Bretts zählen als derselbe Zustand -> ~8x schnelleres Lernen
+const GM={
+ ttt:{init:()=>Array(9).fill(0),legal:b=>b.flatMap((v,i)=>v?[]:[i]),
+  canon(b,p){let best=null;for(const T of SYM){const k=T.map(i=>b[i]?(b[i]===p?'m':'o'):'-').join('');if(!best||k<best.s)best={s:k,T}}return best},
+  apply(b,a,p){b[a]=p;if(L.some(l=>l.every(i=>b[i]===p)))return 1;return b.includes(0)?0:2}},
+ nim:{init:()=>({s:21}),legal:o=>[0,1,2].filter(a=>a<o.s),canon:o=>({s:String(o.s),T:[0,1,2]}),apply(o,a){o.s-=a+1;return o.s===0?1:0}},
+ // 4 Gewinnt (klein: 5 Spalten × 4 Zeilen). Aktion = Spalte, das Stück fällt in die unterste freie Reihe.
+ c4:{cols:5,rows:4,winN:4,
+  init(){return Array(this.cols*this.rows).fill(0)},
+  legal(b){const rows=this.rows,out=[];for(let c=0;c<this.cols;c++)if(b[c*rows+rows-1]===0)out.push(c);return out},
+  canon(b,p){return{s:b.map(v=>v?(v===p?'m':'o'):'-').join(''),T:[...Array(this.cols).keys()]}}, // Aktionsraum = Spalten, keine Symmetriereduktion
+  apply(b,a,p){const rows=this.rows;let r=0;while(b[a*rows+r])r++;b[a*rows+r]=p;
+   if(this.won(b,a*rows+r,p))return 1;return this.legal(b).length?0:2},
+  won(b,idx,p){const rows=this.rows,cols=this.cols,c=Math.floor(idx/rows),r=idx%rows,dirs=[[0,1],[1,0],[1,1],[1,-1]];
+   for(const[dc,dr]of dirs){let n=1;
+    for(let s=1;s<this.winN;s++){const cc=c+dc*s,rr=r+dr*s;if(cc<0||cc>=cols||rr<0||rr>=rows||b[cc*rows+rr]!==p)break;n++}
+    for(let s=1;s<this.winN;s++){const cc=c-dc*s,rr=r-dr*s;if(cc<0||cc>=cols||rr<0||rr>=rows||b[cc*rows+rr]!==p)break;n++}
+    if(n>=this.winN)return true}
+   return false}
+ }
+};
+const AG={ttt:new QAgent(9,.95,1),nim:new QAgent(3,.95,1),rps:new QAgent(3,0,0),c4:new QAgent(5,.97,1)};
+let D={},SS={rps:{h:[],msg:'Wähle deinen Zug!',last:''}},cur='ttt',tab='c';
+const blank=()=>({Q:{},N:{},curve:[],log:[],st:{w:0,d:0,l:0},ep:0,rr:[]});
+function load(){let d={};try{d=JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}for(const g in AG){D[g]={...blank(),...(d[g]||{})};AG[g].Q=D[g].Q;AG[g].N=D[g].N}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D,(k,v)=>typeof v==='number'&&v%1?Math.round(v*1e3)/1e3:v))}catch(e){}}
+function applyTheme(){let t='auto';try{t=localStorage.getItem('ai-lab-theme')||'auto'}catch(e){}
+ if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
+ const b=$('themeBtn');if(b)b.textContent=t==='auto'?'🌓':t==='light'?'☀️':'🌙'}
+function cycleTheme(){let t='auto';try{t=localStorage.getItem('ai-lab-theme')||'auto'}catch(e){}
+ t=t==='auto'?'light':t==='light'?'dark':'auto';try{localStorage.setItem('ai-lab-theme',t)}catch(e){}applyTheme()}
+function exportBrain(){try{const blob=new Blob([JSON.stringify(D)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='ki-labor-gehirn.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(a.href)}catch(e){alert('Export fehlgeschlagen.')}}
+function importBrain(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();
+ r.onload=()=>{try{const d=JSON.parse(r.result);for(const g in AG){if(d[g]){D[g]={...blank(),...d[g]};AG[g].Q=D[g].Q;AG[g].N=D[g].N}}
+   save();newGame('ttt');newGame('nim');sg(cur)}catch(e){alert('Ungültige oder beschädigte Datei.')}};
+ r.readAsText(f);inp.value=''}
+const peek=(g,k)=>AG[g].Q[k]||Array(AG[g].n).fill(0);
+const bg=x=>`background:rgba(${x>=0?'46,160,90':'220,60,60'},${Math.min(.45,Math.abs(x)*.45)})`;
+function addPt(g,y){const d=D[g];d.curve.push({x:d.ep,y:y===undefined?evalR(g):y});if(d.curve.length>150)d.curve.shift()}
+function view(g,pos,p){const c=GM[g].canon(pos,p);return{s:c.s,T:c.T,lg:GM[g].legal(pos).map(a=>c.T.indexOf(a))}}
+function mv(g,pos,p,eps,h,fa){const v=view(g,pos,p),ca=fa===undefined?AG[g].act(v.s,v.lg,eps):v.T.indexOf(fa),r=GM[g].apply(pos,v.T[ca],p);let s2=null,l2=null;if(!r){const w=view(g,pos,3-p);s2=w.s;l2=w.lg}h.push({s:v.s,a:ca,s2,l2,r:r===1?1:0});return{r,a:v.T[ca]}}
+function evalR(g){const G=GM[g];let sc=0,N=200;for(let i=0;i<N;i++){const pos=G.init(),ai=i%2+1;let p=1;for(;;){const lg=G.legal(pos);let r;if(p===ai)r=mv(g,pos,p,0,[]).r;else r=G.apply(pos,lg[Math.floor(Math.random()*lg.length)],p);if(r){sc+=r===2?.5:p===ai?1:0;break}p=3-p}}return sc/N*100}
+function selfPlay(g,eps){const pos=GM[g].init(),h=[];let p=1;for(;;){if(mv(g,pos,p,eps,h).r)break;p=3-p}learn(AG[g],h)}
+// --- Mensch vs KI (Zweispieler) ---
+function ng(){if(cur==='rps'){SS.rps.msg='Wähle deinen Zug!';SS.rps.last='';return paint()}newGame(cur)}
+function newGame(g){const G=GM[g],t=D[g].st,s=SS[g]={pos:G.init(),p:1,hp:(t.w+t.d+t.l)%2?2:1,over:0,busy:0,h:[],mv:[],win:[],msg:''};if(s.hp!==1)aiMove(g);paint()}
+const canH=s=>!s.over&&!s.busy&&s.p===s.hp;
+function play(g,a,eps){const s=SS[g],m=mv(g,s.pos,s.p,eps,s.h,a);s.mv.push((s.p===s.hp?'Du':'KI')+':'+m.a);if(m.r)finish(g,m.r);else s.p=3-s.p;return m.r>0}
+function humanMove(g,a){const s=SS[g];if(!canH(s))return;if(!play(g,a,0))aiMove(g);paint()}
+function aiMove(g){const s=SS[g];s.busy=1;paint();setTimeout(()=>{if(SS[g]!==s)return;s.busy=0;if(!s.over)play(g,undefined,.03);paint()},450)}
+function finish(g,r){const s=SS[g],d=D[g],w=r===1?s.p:0;s.over=1;if(w&&g==='ttt')s.win=L.find(l=>l.every(i=>s.pos[i]===w));
+ if(!w)d.st.d++;else if(w===s.hp)d.st.w++;else d.st.l++;
+ s.msg=!w?'Unentschieden.':w===s.hp?'🎉 Du gewinnst! Die KI lernt daraus.':'🤖 Die KI gewinnt.';
+ learn(AG[g],s.h);d.ep++;d.log.push({episode:d.ep,zuege:s.mv.join(' '),ergebnis:w?(w===s.hp?'Mensch':'KI'):'Remis'});if(d.log.length>40)d.log.shift();addPt(g);save()}
+// --- Schere-Stein-Papier ---
+const rState=()=>('xx'+SS.rps.h.join('')).slice(-2);
+function rpsRound(h,eps){const R=SS.rps,d=D.rps,s=rState(),a=AG.rps.act(s,[0,1,2],eps),x=(a-h+3)%3,r=x===0?0:x===1?1:-1;
+ AG.rps.update(s,a,r,null,null,0);R.h.push(h);if(R.h.length>20)R.h.shift();d.ep++;d.rr.push(r);if(d.rr.length>30)d.rr.shift();
+ d.log.push({episode:d.ep,zustand:s,du:IC[h],ki:IC[a],ki_reward:r});if(d.log.length>40)d.log.shift();return{a,r}}
+const rAvg=()=>{const r=D.rps.rr;return r.length?(r.reduce((a,b)=>a+b,0)/r.length+1)/2*100:50};
+function rpsPlay(h){const {a,r}=rpsRound(h,.1),t=D.rps.st;r===1?t.l++:r===-1?t.w++:t.d++;
+ SS.rps.last=`${IC[h]} vs ${IC[a]}`;SS.rps.msg=r===1?'🤖 KI gewinnt':r===-1?'🎉 Du gewinnst':'Remis';addPt('rps',rAvg());save();paint()}
+const SZ={ttt:[2000,20000,100000],nim:[1000,10000,50000],rps:[500,5000,20000],c4:[5000,30000,150000]};
+let job=null,rArm=0;
+function setTrain(){$('tb').innerHTML=SZ[cur].map(n=>`<button class="btn primary" onclick="doTrain(${n})">▶ ${n.toLocaleString('de')}</button>`).join('')+'<button class="btn" onclick="if(job)job.stop=1">⏹ Stop</button>';algRow()}
+const ALGN={q:'Q-Learning',sarsa:'SARSA',mc:'Monte-Carlo'};
+function setAlg(g,a){AG[g].alg=a;algRow();paint()}
+function algRow(){const g=cur,e=$('algSel');if(g==='rps'){e.innerHTML='<small class="mut">Beim Schere-Stein-Papier gibt es kein Bootstrapping (γ=0) — der Algorithmus ist hier ein Kontext-Bandit.</small>';return}
+ e.innerHTML=Object.keys(ALGN).map(k=>`<button class="btn${AG[g].alg===k?' primary':''}" style="font-size:.8rem;padding:8px 4px" onclick="setAlg('${g}','${k}')">${ALGN[k]}</button>`).join('')}
+function doTrain(N){if(job)return;const g=cur,P=[0,0,1,2,2,1];job={stop:0};let n=0,nx=0;
+ (function tick(){const t0=performance.now();
+  while(n<N&&!job.stop&&performance.now()-t0<14){const eps=.03+.47*Math.exp(-5*n/N);
+   if(g==='rps')rpsRound(P[n%6],eps);else{selfPlay(g,eps);D[g].ep++}n++;
+   if(n>=nx){addPt(g,g==='rps'?rAvg():undefined);nx+=Math.max(1,N/40)}}
+  $('bar').style.width=n/N*100+'%';$('tp').textContent=`Training ${NAMES[g]}: ${n.toLocaleString('de')} / ${N.toLocaleString('de')}`;paint();
+  if(n<N&&!job.stop)setTimeout(tick,0);else{save();job=null;$('tp').textContent='Fertig. Gesamt gelernt: '+D[g].ep.toLocaleString('de')+' Episoden.';paint()}})()}
+function rst(){const b=$('rb');if(!rArm){rArm=1;b.textContent='⚠️ Nochmal tippen zum Löschen';setTimeout(()=>{rArm=0;b.textContent='🗑 Gehirn löschen'},3000);return}
+ rArm=0;b.textContent='🗑 Gehirn löschen';if(job)job.stop=1;const g=cur;D[g]=blank();AG[g].Q=D[g].Q;AG[g].N=D[g].N;
+ if(g==='rps')SS.rps={h:[],msg:'Wähle deinen Zug!',last:''};else newGame(g);save();$('tp').textContent='Gehirn gelöscht.';paint()}
+function sg(g){cur=g;setTrain();paint()}
+function st_(t){tab=t;paint()}
+let tool='mk';
+function stool(t){if(gaJob)gaJob.stop=1;if(PF.job)PF.job.stop=1;if(SN.job)SN.job.stop=1;tool=t;paintTool()}
+function paintTool(){document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===tool));
+ $('toolPanel').innerHTML=tool==='mk'?mkHtml():tool==='ga'?gaHtml():tool==='path'?pfHtml():snHtml();
+ if(tool==='mk')paintMk();else if(tool==='ga')gaDraw();else if(tool==='path'){pfDraw()}else{snDraw();snCurveDraw()}}
+function esc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+// --- Werkzeug: Evolution (Text-Evolution + Neuroevolution) ---
+let GA={mode:'text',target:'ki ist cool',task:'xor',popSize:150,mut:.03,speed:30,pop:[],fits:[],gen:0,best:null,bestFit:0,bestAcc:0,history:[],pts:[]},gaJob=null;
+const GATASKS={xor:'XOR',circle:'Kreis',stripe:'Streifen'};
+const gaIn='flex:1;font:inherit;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:6px';
+function gaHtml(){if(!GA.pop.length)gaReset();const T=GA.mode==='text';
+ return `<h2>Evolution</h2>
+<div class="row"><button class="btn${T?' primary':''}" onclick="gaMode('text')">🔤 Text</button><button class="btn${T?'':' primary'}" onclick="gaMode('net')">🧠 Neuronale Netze</button></div>
+${T?`<p class="mut">Kein Training mit Beispielen, sondern <b>Evolution</b>: ${GA.popSize} zufällige Zeichenketten kreuzen und mutieren sich über Generationen, die „fitteste“ (die dem Zielsatz am ähnlichsten ist) pflanzt sich am ehesten fort. So nähert man sich Problemen, für die man keine direkte Formel hat.</p>
+<label>Zielphrase <input id="gaTarget" value="${esc(GA.target)}" maxlength="40" style="${gaIn}"></label>
+<div class="row" style="margin-top:6px"><button class="btn primary" onclick="gaSetTarget()">🎯 Ziel setzen &amp; neu starten</button></div>
+<div class="big" id="gaBig" style="font-family:monospace;font-size:1.25rem;letter-spacing:.5px;word-break:break-all;background:var(--bg);border-radius:10px;padding:10px;margin-top:10px">${esc(GA.best)||'&nbsp;'}</div>`
+:`<p class="mut">Kein Gradientenabstieg, keine Formel: ${GA.popSize} kleine <b>neuronale Netze</b> (2 Eingänge, 6 versteckte Neuronen, 1 Ausgang) sollen Punkte in zwei Klassen sortieren. Die Gewichte sind ihr Erbgut. Wer mehr Punkte richtig hat, pflanzt sich eher fort (Selektion, Crossover, Mutation). Die Hintergrundfarbe zeigt die Entscheidung des besten Netzes.</p>
+<div class="row">${Object.keys(GATASKS).map(k=>`<button class="btn${GA.task===k?' primary':''}" onclick="gaTask('${k}')">${GATASKS[k]}</button>`).join('')}</div>
+<canvas id="gaNet" width="320" height="320" style="max-width:100%;width:100%;aspect-ratio:1;border-radius:12px;margin-top:8px"></canvas>`}
+<p class="mut" id="gaStat" style="text-align:center"></p>
+<div class="bar"><i id="gaBar"></i></div>
+<div class="row" style="margin-top:10px"><button class="btn primary" id="gaBtn" onclick="gaRun()">▶ Entwickeln</button><button class="btn" onclick="gaInit()">🔄 Neue Population</button></div>
+<label>Mutationsrate <input type="range" id="gaMutR" min="0.01" max="0.5" step="0.01" value="${GA.mut}" oninput="GA.mut=+this.value" style="flex:1"></label>
+<label>Tempo <input type="range" id="gaSpeedR" min="0" max="300" step="10" value="${GA.speed}" oninput="GA.speed=+this.value" style="flex:1"></label>
+<h2 style="margin-top:14px">Fitness über Generationen</h2><canvas id="gaCurve" width="600" height="120" style="max-width:100%"></canvas>
+<button class="tiny" onclick="gaCode()">Quellcode anzeigen/verbergen</button><pre id="gaSrc" style="display:none"></pre>`}
+function gaCode(){const p=$('gaSrc');p.style.display=p.style.display==='none'?'block':'none';p.textContent=$('gacode').textContent.trim()}
+function gaReset(){GA.pts=gaPoints(GA.task);GA.pop=Array.from({length:GA.popSize},()=>GA.mode==='text'?gaRandStr(GA.target.length):gaRandW());GA.gen=0;GA.history=[];gaEvalBest()}
+function gaInit(){if(gaJob){gaJob.stop=1;gaJob=null}gaReset();paintTool()}
+function gaMode(m){GA.mode=m;GA.mut=m==='text'?.03:.15;GA.popSize=m==='text'?150:100;gaInit()}
+function gaTask(k){GA.task=k;gaInit()}
+function gaSetTarget(){const t=$('gaTarget').value.trim();if(!t)return;GA.target=t.slice(0,40);gaInit()}
+function gaEvalBest(){const T=GA.mode==='text';GA.fits=GA.pop.map(w=>T?gaFitT(w,GA.target):gaFit(w,GA.pts));let bi=0;GA.fits.forEach((f,i)=>{if(f>GA.fits[bi])bi=i});
+ GA.best=GA.pop[bi];GA.bestFit=GA.fits[bi];GA.bestAcc=T?GA.bestFit:gaAcc(GA.best,GA.pts);GA.history.push(Math.max(0,GA.bestFit*100));if(GA.history.length>250)GA.history.shift()}
+function gaStep(){const T=GA.mode==='text',np=[GA.best];
+ while(np.length<GA.pop.length){const a=gaSelect(GA.pop,GA.fits),b=gaSelect(GA.pop,GA.fits);np.push(T?gaMutateT(gaCrossT(a,b),GA.mut):gaMutate(gaCross(a,b),GA.mut))}
+ GA.pop=np;GA.gen++;gaEvalBest()}
+function gaRun(){if(gaJob){gaJob.stop=1;const b=$('gaBtn');if(b)b.textContent='▶ Entwickeln';return}
+ if(!GA.pop.length)gaReset();
+ if(GA.bestAcc>=1){alert(GA.mode==='text'?'Ziel schon erreicht! Neue Population oder neue Zielphrase probieren.':'Das Netz sortiert schon alle Punkte richtig! Neue Population oder andere Aufgabe probieren.');return}
+ gaJob={stop:0};const sb=$('gaBtn');if(sb)sb.textContent='⏹ Stop';
+ (function tick(){if(!gaJob||gaJob.stop){gaJob=null;return}
+  gaStep();
+  if(tool==='ga'){gaDraw();updGaText()}
+  if(!gaJob||gaJob.stop||GA.bestAcc>=1){gaJob=null;const b=$('gaBtn');if(b)b.textContent='▶ Entwickeln';return}
+  GA.speed<=5?requestAnimationFrame(tick):setTimeout(tick,GA.speed)})()}
+function updGaText(){if(tool!=='ga')return;const s=$('gaStat'),b=$('gaBar'),g=$('gaBig');
+ if(g)g.textContent=GA.best;
+ if(s)s.textContent=GA.mode==='text'?`Generation ${GA.gen} · Übereinstimmung ${(GA.bestFit*100).toFixed(0)}%`:`Generation ${GA.gen} · Fitness ${Math.max(0,GA.bestFit*100).toFixed(0)}% · Treffer ${(GA.bestAcc*100).toFixed(0)}%`;
+ if(b)b.style.width=Math.max(0,GA.bestFit*100)+'%'}
+function gaDraw(){updGaText();const st=getComputedStyle(document.documentElement),mu=st.getPropertyValue('--mut').trim()||'#888',ac=st.getPropertyValue('--acc').trim()||'#e4572e';
+ const nc=$('gaNet');if(nc&&GA.mode==='net'&&GA.best){const x=nc.getContext('2d'),W=nc.width,n=32,c=W/n;x.clearRect(0,0,W,W);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++){const o=gaOut(GA.best,(i+.5)/n*2-1,(j+.5)/n*2-1);
+   x.fillStyle=o>.5?`rgba(27,127,140,${(o-.5)*.9})`:`rgba(228,87,46,${(.5-o)*.9})`;x.fillRect(i*c,j*c,c+.5,c+.5)}
+  for(const p of GA.pts){x.beginPath();x.arc((p.x+1)/2*W,(p.y+1)/2*W,5,0,7);x.fillStyle=p.t?'#1b7f8c':'#e4572e';x.fill();x.strokeStyle='#fff';x.lineWidth=1.5;x.stroke()}}
+ const cv=$('gaCurve');if(!cv)return;const x=cv.getContext('2d'),W=cv.width,H=cv.height,h=GA.history;x.clearRect(0,0,W,H);
+ if(h.length<2){x.fillStyle=mu;x.font='12px system-ui';x.fillText('Noch keine Generationen. Auf „Entwickeln" klicken.',10,H/2);return}
+ x.strokeStyle=ac;x.lineWidth=2;x.beginPath();h.forEach((v,i)=>{const px=i/(h.length-1)*W,py=H-v/100*H*.9-4;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
+
+// --- Werkzeug: Wegfindung (A*-Suche) ---
+let PF={cols:14,rows:14,walls:new Set(),start:0,goal:0,mode:'wall',path:[],open:new Set(),closed:new Set(),cur:-1,job:null,speed:40,alg:'astar',info:''},pfDown=0,pfPaint=1;
+function pfHtml(){if(!PF.walls.size&&PF.goal===0){pfReset0();PF.walls=pfMakeWalls(PF.cols,PF.rows,PF.start,PF.goal,.28)}
+ return `<h2>Wegfindung (A*)</h2>
+<p class="mut">A* sucht den kürzesten Weg, ohne blind alles abzusuchen: Aus den Feldern am Rand der Suche (orange) wählt es das mit der kleinsten Schätzung <b>f = g + h</b>. g sind die bisherigen Schritte, h die Luftlinie bis zum Ziel. Untersuchte Felder werden blau. <b>Dijkstra</b> rechnet mit h = 0 und sucht deshalb in alle Richtungen. Zeichne Wände und vergleiche, wie viele Felder jeder Algorithmus braucht.</p>
+<div class="row"><button class="btn${PF.mode==='wall'?' primary':''}" onclick="pfMode('wall')">🧱 Wände</button><button class="btn${PF.mode==='start'?' primary':''}" onclick="pfMode('start')">🟢 Start</button><button class="btn${PF.mode==='goal'?' primary':''}" onclick="pfMode('goal')">🔴 Ziel</button></div>
+<canvas id="pfCanvas" width="420" height="420" style="max-width:100%;width:100%;aspect-ratio:1;margin-top:10px;cursor:pointer;touch-action:none" onmousedown="pfDownH(event)" onmousemove="pfMoveH(event)" onmouseup="pfUpH()" onmouseleave="pfUpH()" ontouchstart="pfDownH(event)" ontouchmove="pfMoveH(event)" ontouchend="pfUpH()"></canvas>
+<p class="mut" id="pfTp">${esc(PF.info)}</p>
+<div class="row"><button class="btn${PF.alg==='astar'?' primary':''}" onclick="pfSetAlg('astar')">A*</button><button class="btn${PF.alg==='dijkstra'?' primary':''}" onclick="pfSetAlg('dijkstra')">Dijkstra</button></div>
+<div class="row" style="margin-top:8px"><button class="btn primary" onclick="pfRun(0)">▶ Suche starten</button><button class="btn" onclick="pfRun(1)">⏩ Sofort lösen</button><button class="btn" onclick="if(PF.job)PF.job.stop=1">⏹ Stop</button></div>
+<div class="row" style="margin-top:8px"><button class="btn" onclick="pfMaze()">🌀 Zufallslabyrinth</button><button class="btn" onclick="pfClear()">🧹 Leeren</button></div>
+<label>Tempo <input type="range" id="pfSpeed" min="0" max="300" step="10" value="${PF.speed}" oninput="PF.speed=+this.value" style="flex:1"></label>
+<p class="mut"><span class="lg" style="background:rgba(79,70,229,.3)"></span> untersucht <span class="lg" style="background:rgba(234,88,12,.5)"></span> offen (Kandidaten) <span class="lg" style="background:var(--acc)"></span> kürzester Weg</p>
+<button class="tiny" onclick="pfCode()">Quellcode anzeigen/verbergen</button><pre id="pfSrc" style="display:none"></pre>`}
+function pfReset0(){PF.start=0;PF.goal=PF.cols*PF.rows-1}
+function pfCode(){const p=$('pfSrc');p.style.display=p.style.display==='none'?'block':'none';p.textContent=$('pathcode').textContent.trim()}
+function pfMode(m){PF.mode=m;paintTool()}
+function pfClearSearch(){if(PF.job)PF.job.stop=1;PF.job=null;PF.path=[];PF.open=new Set();PF.closed=new Set();PF.cur=-1;PF.info=''}
+function pfSetAlg(k){PF.alg=k;pfClearSearch();paintTool()}
+function pfXY(e){const t=e.touches&&e.touches[0];return t?{clientX:t.clientX,clientY:t.clientY}:{clientX:e.clientX,clientY:e.clientY}}
+function pfCellAt(e){const xy=pfXY(e),cv=$('pfCanvas'),r=cv.getBoundingClientRect(),c=Math.floor((xy.clientX-r.left)/(r.width/PF.cols)),ro=Math.floor((xy.clientY-r.top)/(r.height/PF.rows));
+ if(c<0||c>=PF.cols||ro<0||ro>=PF.rows)return -1;return ro*PF.cols+c}
+function pfDownH(e){if(e.cancelable)e.preventDefault();pfDown=1;const i=pfCellAt(e);if(i<0)return;
+ if(PF.mode==='wall'){pfPaint=PF.walls.has(i)?0:1;pfApplyWall(i)}else pfToggle(i)}
+function pfMoveH(e){if(!pfDown||PF.mode!=='wall')return;if(e.cancelable)e.preventDefault();const i=pfCellAt(e);if(i<0)return;pfApplyWall(i)}
+function pfUpH(){pfDown=0}
+function pfApplyWall(i){if(i===PF.start||i===PF.goal)return;pfPaint?PF.walls.add(i):PF.walls.delete(i);pfClearSearch();pfDraw();updPf()}
+function pfToggle(i){if(i===PF.start||i===PF.goal)return;
+ if(PF.mode==='start'){PF.walls.delete(i);PF.start=i}else{PF.walls.delete(i);PF.goal=i}
+ pfClearSearch();pfDraw();updPf()}
+function pfMaze(){pfClearSearch();PF.walls=pfMakeWalls(PF.cols,PF.rows,PF.start,PF.goal,.28);pfDraw();updPf()}
+function pfClear(){pfClearSearch();PF.walls=new Set();pfDraw();updPf()}
+function updPf(){const t=$('pfTp');if(t)t.textContent=PF.info}
+function pfApplyEv(e){PF.closed.add(e.cur);PF.open.delete(e.cur);e.added.forEach(n=>PF.open.add(n));PF.cur=e.cur}
+// Suche animiert (zeitbasiert, requestAnimationFrame) oder sofort ausführen
+function pfRun(instant){pfClearSearch();const r=pfAStar(PF.start,PF.goal,PF.walls,PF.cols,PF.rows,PF.alg==='astar'),name=PF.alg==='astar'?'A*':'Dijkstra';PF.open.add(PF.start);
+ const fin=()=>{PF.path=r.path||[];PF.cur=-1;PF.job=null;PF.info=r.path?`${name}: Weg mit ${r.path.length-1} Schritten gefunden, ${r.ev.length} Felder untersucht.`:`${name}: Kein Weg möglich (${r.ev.length} Felder untersucht).`;pfDraw();updPf()};
+ if(instant){r.ev.forEach(pfApplyEv);fin();return}
+ const job=PF.job={stop:0};let k=0,last=performance.now(),acc=0;
+ (function frame(now){if(job.stop){PF.job=null;return}
+  acc+=Math.min(100,now-last);last=now;const iv=Math.max(PF.speed,1),n=Math.min(40,Math.floor(acc/iv));acc=Math.min(acc-n*iv,iv);
+  for(let j=0;j<n&&k<r.ev.length;j++,k++)pfApplyEv(r.ev[k]);
+  if(k>=r.ev.length){fin();return}
+  PF.info=`${name}: ${k} Felder untersucht …`;pfDraw();updPf();requestAnimationFrame(frame)})(last)}
+function pfDraw(){const cv=$('pfCanvas');if(!cv)return;
+ const dpr=Math.min(2,window.devicePixelRatio||1),px=Math.round((cv.clientWidth||420)*dpr);if(cv.width!==px){cv.width=px;cv.height=px}
+ const x=cv.getContext('2d'),W=cv.width,H=cv.height,cw=W/PF.cols,ch=H/PF.rows,u=W/420,cs=getComputedStyle(document.documentElement),acc=cs.getPropertyValue('--acc').trim()||'#4F46E5',ln=cs.getPropertyValue('--line').trim()||'#C7D2FE',fg=cs.getPropertyValue('--fg').trim()||'#1E1B4B';
+ x.clearRect(0,0,W,H);
+ for(let i=0;i<PF.cols*PF.rows;i++){const X=(i%PF.cols)*cw,Y=Math.floor(i/PF.cols)*ch;
+  if(PF.walls.has(i)){x.fillStyle=acc;x.globalAlpha=.55;x.beginPath();x.roundRect(X+1,Y+1,cw-2,ch-2,4*u);x.fill();x.globalAlpha=1}
+  else if(PF.closed.has(i)){x.fillStyle='rgba(139,124,255,.32)';x.fillRect(X,Y,cw,ch)}
+  else if(PF.open.has(i)){x.fillStyle='rgba(234,88,12,.45)';x.fillRect(X,Y,cw,ch)}}
+ x.strokeStyle=ln;x.globalAlpha=.6;x.lineWidth=1;x.beginPath();
+ for(let c=0;c<=PF.cols;c++){x.moveTo(c*cw,0);x.lineTo(c*cw,H)}for(let r=0;r<=PF.rows;r++){x.moveTo(0,r*ch);x.lineTo(W,r*ch)}x.stroke();x.globalAlpha=1;
+ if(PF.path.length>1){x.strokeStyle=acc;x.lineWidth=5*u;x.lineJoin=x.lineCap='round';x.beginPath();
+  PF.path.forEach((i,k)=>{const X=(i%PF.cols)*cw+cw/2,Y=Math.floor(i/PF.cols)*ch+ch/2;k?x.lineTo(X,Y):x.moveTo(X,Y)});x.stroke()}
+ const dot=(i,col,r)=>{x.fillStyle=col;x.strokeStyle='#fff';x.lineWidth=2*u;x.beginPath();x.arc((i%PF.cols)*cw+cw/2,Math.floor(i/PF.cols)*ch+ch/2,r,0,7);x.fill();x.stroke()},rad=Math.min(cw,ch);
+ dot(PF.start,'#16A34A',rad*.32);dot(PF.goal,'#DC2626',rad*.32);if(PF.cur>=0)dot(PF.cur,'#EA580C',rad*.2)}
+
+// --- Werkzeug: Autonome Schlange (Q-Learning, echtes Lernen durch Versuch/Belohnung) ---
+let SN={cols:16,rows:16,snake:[],dirIdx:1,food:{x:8,y:8},alive:false,score:0,best:0,speed:80,job:null};
+const SNAG=new QAgent(3,.9,1);AG.sn=SNAG;
+function snHtml(){if(!SN.snake.length)snInit();
+ return `<h2>Autonome Schlange (Q-Learning)</h2>
+<p class="mut">Auch hier: echtes Lernen, keine festen Regeln von mir. Zustand = Gefahr geradeaus/rechts/links + aktuelle Richtung + Futterrichtung (11 Bits). Aktionen = geradeaus/rechts/links abbiegen. Belohnung: +10 fürs Futter, −10 fürs Sterben, ein kleiner Abzug pro Schritt sonst. Am Anfang stirbt sie ständig sinnlos — nach ein paar tausend trainierten Partien wird sie spürbar zielstrebiger.</p>
+<canvas id="snCanvas" width="320" height="320" style="max-width:100%;width:100%;aspect-ratio:1;border-radius:12px;margin-top:4px"></canvas>
+<p class="mut" id="snStat"></p>
+<div class="row" id="snAlg">${['q','sarsa','mc'].map(k=>`<button class="btn${SNAG.alg===k?' primary':''}" style="font-size:.8rem;padding:8px 4px" onclick="snSetAlg('${k}')">${ALGN[k]}</button>`).join('')}</div>
+<div class="row" style="margin-top:8px">${[200,2000,10000].map(n=>`<button class="btn primary" onclick="snTrain(${n})">▶ ${n.toLocaleString('de')} Partien</button>`).join('')}<button class="btn" onclick="if(SN.job)SN.job.stop=1">⏹ Stop</button></div>
+<div class="bar"><i id="snBar"></i></div><p class="mut" id="snTp"></p>
+<div class="row" style="margin-top:8px"><button class="btn primary" id="snBtn" onclick="snRun()">🎬 Vorführen</button><button class="btn" onclick="snInit();snDraw()">🔄 Neues Spiel</button><button class="btn" onclick="snResetBrain()">🗑 Gehirn löschen</button></div>
+<label>Tempo (Vorführen) <input type="range" id="snSpeed" min="20" max="300" step="10" value="${SN.speed}" oninput="SN.speed=+this.value" style="flex:1"></label>
+<h2 style="margin-top:14px">Punkte pro trainierter Partie über die Zeit</h2><canvas id="snCurve" width="600" height="120" style="max-width:100%"></canvas>
+<button class="tiny" onclick="snCode()">Quellcode anzeigen/verbergen</button><pre id="snSrc" style="display:none"></pre>`}
+function snCode(){const p=$('snSrc');p.style.display=p.style.display==='none'?'block':'none';p.textContent=$('sncode').textContent.trim()}
+function snSetAlg(k){SNAG.alg=k;paintTool()}
+function snResetBrain(){SNAG.Q={};SNAG.N={};D.sn=blank();AG.sn.Q=D.sn.Q;AG.sn.N=D.sn.N;save();paintTool()}
+function snInit(){SN.snake=snStartSnake(SN.cols,SN.rows);SN.dirIdx=1;SN.alive=true;SN.score=0;SN.food=snRandFood(SN.snake,SN.cols,SN.rows)}
+function snPlayStep(){if(!SN.alive)return;
+ const s=snState(SN.snake,SN.food,SN.dirIdx,SN.cols,SN.rows),a=SNAG.act(s,[0,1,2],0);
+ const res=snApplyStep(SN.snake,SN.food,SN.dirIdx,a,SN.cols,SN.rows);
+ if(res.dead){SN.alive=false;SN.best=Math.max(SN.best,SN.score);return}
+ if(res.ate)SN.score++;
+ SN.snake=res.snake;SN.food=res.food;SN.dirIdx=res.dirIdx}
+function snTrain(N){if(SN.job)return;SN.job={stop:0};let n=0;
+ (function tick(){const t0=performance.now();
+  while(n<N&&!SN.job.stop&&performance.now()-t0<14){const eps=.08+.42*Math.exp(-4*n/N);
+   const res=snEpisode(SNAG,SN.cols,SN.rows,eps,400);D.sn.ep++;n++;
+   if(n%Math.max(1,Math.floor(N/30))===0)addPt('sn',res.score)}
+  if(tool==='sn'){const bar=$('snBar');if(bar)bar.style.width=n/N*100+'%';const tp=$('snTp');if(tp)tp.textContent=`Trainiere … ${n.toLocaleString('de')} / ${N.toLocaleString('de')} Partien`;snCurveDraw()}
+  if(n<N&&!SN.job.stop)setTimeout(tick,0);
+  else{SN.job=null;save();
+   if(tool==='sn'){const tp=$('snTp');if(tp)tp.textContent=`Fertig. ${D.sn.ep.toLocaleString('de')} Partien insgesamt trainiert.`;paintTool()}}
+ })()}
+function snRun(){if(SN.job){SN.job.stop=1;const b=$('snBtn');if(b)b.textContent='🎬 Vorführen';return}
+ if(!SN.alive)snInit();
+ SN.job={stop:0};const sb=$('snBtn');if(sb)sb.textContent='⏹ Stop';
+ (function tick(){if(!SN.job||SN.job.stop){SN.job=null;return}
+  snPlayStep();
+  if(tool==='sn')snDraw();
+  if(!SN.alive){SN.job=null;const b=$('snBtn');if(b)b.textContent='🎬 Vorführen';return}
+  if(!SN.job||SN.job.stop){SN.job=null;return}
+  setTimeout(tick,SN.speed)})()}
+function snCurveDraw(){const cv=$('snCurve');if(!cv)return;const x=cv.getContext('2d'),W=cv.width,H=cv.height;x.clearRect(0,0,W,H);
+ const h=D.sn.curve,mu=getComputedStyle(document.documentElement).getPropertyValue('--mut').trim()||'#888',ac=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#e4572e';
+ if(h.length<2){x.fillStyle=mu;x.font='12px system-ui';x.fillText('Noch keine Trainingsdaten.',10,H/2);return}
+ const maxY=Math.max(...h.map(p=>p.y),1);
+ x.strokeStyle=ac;x.lineWidth=2;x.beginPath();h.forEach((p,i)=>{const px=i/(h.length-1)*W,py=H-p.y/maxY*H*.85-6;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
+function snDraw(){const cv=$('snCanvas');if(!cv)return;const x=cv.getContext('2d'),W=cv.width,H=cv.height,cw=W/SN.cols,ch=H/SN.rows,
+  acc=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#e4572e',
+  o=getComputedStyle(document.documentElement).getPropertyValue('--o').trim()||'#1b7f8c';
+ x.clearRect(0,0,W,H);
+ x.fillStyle=o;x.fillRect(SN.food.x*cw+2,SN.food.y*ch+2,cw-4,ch-4);
+ SN.snake.forEach((s,i)=>{x.globalAlpha=i===0?1:.7;x.fillStyle=acc;x.fillRect(s.x*cw+1,s.y*ch+1,cw-2,ch-2)});
+ x.globalAlpha=1;
+ const st=$('snStat');if(st)st.textContent=`${D.sn.ep?D.sn.ep.toLocaleString('de')+' Partien trainiert · ':''}Länge ${SN.snake.length} · Punkte ${SN.score} · Rekord ${SN.best}`+(SN.alive?'':' · 💀 gestorben')}
+
+// --- Werkzeug: Textvorhersage (kleines neuronales Netz) ---
+let MK={corpus:'',gen:''};
+function mkHtml(){return `<h2>Textvorhersage (Neuronales Netz)</h2>
+<p class="mut">Ein winziges Sprachmodell nach demselben Prinzip wie große: Es bekommt die letzten ${mk.order} Zeichen, schickt sie durch eine versteckte Schicht mit ${mk.H} Neuronen und sagt Wahrscheinlichkeiten für das nächste Zeichen voraus. Gelernt wird per Backpropagation und Gradientenabstieg. Gib ein paar Sätze ein, damit es lernt.</p>
+<div class="row">${[1,2,3].map(o=>`<button class="btn${mk.order===o?' primary':''}" onclick="mkOrder(${o})">Kontext ${o}</button>`).join('')}</div>
+<textarea id="mkIn" rows="2" style="width:100%;margin-top:8px;font:inherit;font-size:.9rem;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:8px" placeholder="Schreib ein paar Sätze …"></textarea>
+<div class="row" style="margin-top:6px"><button class="btn primary" onclick="mkLearn()">📚 Trainieren</button><button class="btn" onclick="mkClear()">🗑 Vergessen</button></div>
+<p class="mut" id="mkStat"></p>
+<label>Live-Vorhersage <input id="mkTest" oninput="paintMk()" style="flex:1;font:inherit;font-size:.9rem;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);padding:6px" placeholder="tippe hier …"></label>
+<div id="mkPred" style="margin:8px 0;line-height:2.2"></div>
+<div class="row"><button class="btn" onclick="mkGen()">✨ Text generieren</button></div>
+<p class="mut" style="white-space:pre-wrap;min-height:1.5em" id="mkGen">–</p>
+<button class="tiny" onclick="mkCode()">Quellcode anzeigen/verbergen</button><pre id="mkSrc" style="display:none"></pre>`}
+function mkCode(){const p=$('mkSrc');p.style.display=p.style.display==='none'?'block':'none';p.textContent=$('mkcode').textContent.trim()}
+function mkOrder(o){mk.order=o;mk.fit(MK.corpus);paintTool()}
+function mkLearn(){const t=$('mkIn').value;if(!t.trim())return;MK.corpus+=(MK.corpus?' ':'')+t.trim();mk.fit(MK.corpus);$('mkIn').value='';paintMk();$('mkIn').focus()}
+function mkClear(){MK.corpus='';MK.gen='';mk.fit('');paintMk()}
+function mkGen(){if(!mk.V||mk.order>=MK.corpus.length){alert('Erst ein paar Sätze eingeben und auf Trainieren klicken.');return}
+ MK.gen=mk.generate(MK.corpus.slice(-mk.order),100)||'(keine Vorhersage möglich)';paintMk()}
+function mkPredHtml(k){const d=mk.dist(k);
+ if(!d)return '<span class="mut">Noch nichts gelernt, oder ein unbekanntes Zeichen.</span>';
+ return d.slice(0,6).map(([c,pr])=>`<span style="${bg((pr-.3)*1.4)};padding:2px 7px;border-radius:6px;margin-right:4px;display:inline-block">${c==='\n'?'⏎':c===' '?'␣':c} ${(pr*100).toFixed(0)}%</span>`).join('')}
+function paintMk(){if($('mkStat'))$('mkStat').textContent=`${MK.corpus.length} Zeichen · ${mk.params().toLocaleString('de')} Gewichte · `+(mk.loss==null?'noch nicht trainiert':`Fehler ${mk.loss.toFixed(2)} nach ${mk.epochs} Durchläufen`);
+ if($('mkPred'))$('mkPred').innerHTML=mkPredHtml($('mkTest')?.value||'');
+ if($('mkGen'))$('mkGen').textContent=MK.gen||'–'}
+// --- UI ---
+function uiTtt(){const s=SS.ttt,cn=GM.ttt.canon(s.pos,s.hp),v=$('hints').checked&&canH(s)?peek('ttt',cn.s):null;
+ return '<div class="grid3">'+s.pos.map((c,i)=>{const x=v&&!c?v[cn.T.indexOf(i)]:null;return `<button class="cell ${c?(c===1?'X':'O'):''}${s.win.includes(i)?' win':''}" ${c||!canH(s)?'disabled':''} onclick="humanMove('ttt',${i})" style="${x!==null?bg(x):''}">${c?(c===1?'✕':'○'):''}${x!==null?`<span class="v">${x.toFixed(2)}</span>`:''}</button>`}).join('')+'</div>'}
+function uiNim(){const s=SS.nim,o=s.pos,v=$('hints').checked&&canH(s)?peek('nim',String(o.s)):null;
+ return `<div class="sticks">${'<i></i>'.repeat(o.s)}</div><div class="row">`+[0,1,2].map(a=>`<button class="btn" ${a<o.s&&canH(s)?'':'disabled'} onclick="humanMove('nim',${a})">Nimm ${a+1}${v&&a<o.s?`<br><small style="${bg(v[a])};padding:1px 6px;border-radius:5px">${v[a].toFixed(2)}</small>`:''}</button>`).join('')+'</div>'}
+function uiC4(){const s=SS.c4,b=s.pos,G=GM.c4,legal=G.legal(b),v=$('hints').checked&&canH(s)?peek('c4',G.canon(b,s.hp).s):null,
+ cells=[];for(let r=G.rows-1;r>=0;r--)for(let c=0;c<G.cols;c++){const cell=b[c*G.rows+r];cells.push(`<div class="c4cell${cell?(cell===1?' X':' O'):''}"></div>`)}
+ const btns=Array.from({length:G.cols},(_,c)=>{const ok=legal.includes(c)&&canH(s),x=v&&legal.includes(c)?v[c]:null;
+  return `<button class="btn" ${ok?'':'disabled'} onclick="humanMove('c4',${c})" style="padding:6px 2px">⬇${x!==null?`<br><small style="${bg(x)};padding:1px 4px;border-radius:4px">${x.toFixed(2)}</small>`:''}</button>`}).join('');
+ return `<div class="row">${btns}</div><div class="c4" style="grid-template-columns:repeat(${G.cols},1fr)">${cells.join('')}</div>`}
+function uiRps(){const R=SS.rps,v=peek('rps',rState());
+ return `<div class="big">${R.last||'❔ vs ❔'}</div><div class="row">`+IC.map((e,i)=>`<button class="btn big" onclick="rpsPlay(${i})">${e}</button>`).join('')+'</div>'+($('hints').checked?`<p class="mut" style="text-align:center">KI-Erwartung für ihren nächsten Zug: ${IC.map((e,i)=>`<span style="${bg(v[i])};padding:1px 6px;border-radius:5px">${e} ${v[i].toFixed(2)}</span>`).join(' ')}</p>`:'')}
+const fmt=(g,k)=>g==='ttt'?k.replace(/./g,c=>c==='m'?'✕':c==='o'?'○':'·').replace(/(...)/g,'$1\n').trim():g==='nim'?'Noch '+k:k==='xx'?'Start':[...k].map(c=>IC[c]||'·').join('');
+function panelQ(){const g=cur,ag=AG[g],ks=Object.keys(ag.Q).sort((a,b)=>(ag.N[b]||0)-(ag.N[a]||0)).slice(0,12),vs=Object.values(ag.Q).flat(),up=Object.values(ag.N).reduce((a,b)=>a+b,0);
+ return `<h2>Das Gehirn: Q-Tabelle</h2><p class="mut">${Object.keys(ag.Q).length} Zustände · ${up} Updates · ${vs.filter(v=>Math.abs(v)>.001).length}/${vs.length} Werte ≠ 0 · α=${ag.adapt?'1/√n':ag.alpha} γ=${ag.gamma}<br>${ACT[g]}<br>Die 12 am häufigsten besuchten Zustände:</p><div class="qt">`+ks.map(k=>`<div class="qr"><div class="qs">${fmt(g,k)}<br><small>${ag.N[k]}×</small></div><div class="qg">${ag.Q[k].map(v=>`<span style="${bg(v)}">${v.toFixed(1)}</span>`).join('')}</div></div>`).join('')+'</div>'}
+const panels={
+ c:()=>`<h2>Lernkurve</h2><canvas id="pc" width="600" height="220"></canvas><p class="mut">${cur==='rps'?'Gewinnquote der KI (letzte 30 Runden, 50 % = Gleichstand)':'Stärke gegen einen Zufallsspieler (Sieg = 100, Remis = 50, Niederlage = 0), gemessen in 200 Testspielen nach jedem Trainingsschritt'}. Gestrichelt = 50 %.</p><h2>Verteilung der gelernten Werte</h2><canvas id="hc" width="600" height="180"></canvas><p class="mut">Rot: Aktionen, die die KI für schlecht hält. Grün: Aktionen, die sie für gut hält. Mit mehr Training entstehen klare Extreme.</p>`,
+ q:panelQ,
+ d:()=>{let sz=0;try{sz=(localStorage.getItem(KEY)||'').length}catch(e){}return `<h2>Trainingsdaten</h2><p class="mut">Es gibt keinen fertigen Datensatz. Die KI erzeugt ihre Daten selbst: Selbstspiel, deine Partien, und beim Schere-Stein-Papier deine Züge. Gespeichert im localStorage unter <code>${KEY}</code> (aktuell ≈ ${(sz/1024).toFixed(0)} KB, alle Spiele). Hier die letzten 15 Episoden von ${NAMES[cur]}:</p><pre id="raw"></pre><button class="tiny" onclick="cp('raw')">JSON kopieren</button>${cur==='rps'?'':'<p class="mut">Selbstspiel-Partien werden nur gelernt, nicht einzeln protokolliert. Hier stehen deine Partien (Zahl = gewähltes Feld/Nimm−1).</p>'}`},
+ m:()=>`<h2>Modell</h2><p class="mut"><b>Tabellarisches Q-Learning</b> (Watkins, 1989), ein klassisches Reinforcement-Learning-Verfahren. Kein neuronales Netz, keine Bibliothek, keine Gewichtsdatei: Das Modell ist die Tabelle <code>Q[Zustand][Aktion]</code> mit dem erwarteten Ertrag jeder Aktion.<br><br>Lernregel: <code>Q(s,a) ← Q(s,a) + α·(r + γ·max Q(s′,a′) − Q(s,a))</code><br>Verbesserungen: adaptive Lernrate α=1/√n (Zustände, die oft vorkommen, werden präziser), Symmetrie-Normalisierung beim Tic-Tac-Toe (8 Drehungen/Spiegelungen = 1 Zustand), Exploration ε fällt exponentiell von 0,5 auf 0,03.<br>Zweispieler-Spiele: Negamax, denn was für mich gut ist, ist für den Gegner schlecht. Beim Schere-Stein-Papier: γ=0, Zustand = deine letzten 2 Züge.<br><br>
+<b>Drei austauschbare Lernregeln</b> (oben bei Tic-Tac-Toe/Nim umschaltbar, wirken auf dieselbe Tabelle):<br>
+• <b>Q-Learning</b> (off-policy): <code>Q(s,a) ← Q(s,a) + α·(r + γ·max Q(s′,·) − Q(s,a))</code> — lernt die optimale Strategie, auch während sie noch zufällig herumprobiert.<br>
+• <b>SARSA</b> (on-policy): <code>Q(s,a) ← Q(s,a) + α·(r + γ·Q(s′,a′) − Q(s,a))</code> — bootstrapped mit der tatsächlich gewählten Folgeaktion, dadurch vorsichtiger.<br>
+• <b>Monte-Carlo-Control</b>: kein Bootstrapping, wartet die ganze Partie ab und lernt mit dem echten Ertrag <code>G</code>.<br><br>
+Vier weitere Werkzeuge: ein <b>neuronales Netz</b> (Sprachmodell mit versteckter Schicht, per Backpropagation aus deinem Text trainiert), <b>Evolution</b> (Text-Evolution und Populationen neuronaler Netze, die durch Selektion, Crossover und Mutation besser werden), die <b>A*-Wegfindung</b> (klassische Suche mit Heuristik: lernt nichts, findet aber nachweislich den kürzesten Weg) und einen <b>Q-Learning-Agenten</b>, der lernt, sich selbst als Schlange zu steuern. Er benutzt dieselbe QAgent-Klasse wie Tic-Tac-Toe &amp; Co., nur mit Spielsituationen statt Spielzügen als Zustand.<br><br>Vollständiger Modell-Quellcode (live aus dieser Seite gelesen; die Spiellogik steht im Seitenquelltext):</p><pre id="src"></pre><button class="tiny" onclick="cp('src')">Code kopieren</button>`};
+function cp(id){const t=$(id).textContent,fb=()=>{try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}catch(e){}};try{navigator.clipboard.writeText(t).catch(fb)}catch(e){fb()}}
+function draw(){const st=getComputedStyle(document.documentElement),mu=st.getPropertyValue('--mut').trim(),ln=st.getPropertyValue('--line').trim(),ac=st.getPropertyValue('--acc').trim();
+ let cv=$('pc');if(cv){const x=cv.getContext('2d'),W=600,H=220,c=D[cur].curve;x.font='12px system-ui';x.fillStyle=mu;x.strokeStyle=ln;
+  for(let i=0;i<=4;i++){const y=12+(H-34)*i/4;x.beginPath();x.moveTo(36,y);x.lineTo(W-8,y);x.stroke();x.fillText(100-25*i+'%',2,y+4)}
+  if(c.length<2)x.fillText('Noch zu wenig Daten. Spiel oder trainiere!',70,H/2);else{
+   const x0=c[0].x,x1=c[c.length-1].x,px=v=>36+(v-x0)/((x1-x0)||1)*(W-44),py=v=>12+(H-34)*(1-v/100);
+   x.setLineDash([4,4]);x.beginPath();x.moveTo(36,py(50));x.lineTo(W-8,py(50));x.stroke();x.setLineDash([]);
+   x.strokeStyle=ac;x.lineWidth=2.5;x.beginPath();c.forEach((p,i)=>i?x.lineTo(px(p.x),py(p.y)):x.moveTo(px(p.x),py(p.y)));x.stroke();x.fillStyle=mu;x.fillText('Episode '+x0+' → '+x1,36,H-4)}}
+ cv=$('hc');if(cv){const x=cv.getContext('2d'),W=600,H=180,B=20,bins=Array(B).fill(0);
+  Object.values(AG[cur].Q).flat().filter(t=>Math.abs(t)>.001).forEach(t=>bins[Math.min(B-1,Math.max(0,Math.floor((t+1)/2*B)))]++);
+  const m=Math.max(1,...bins),bw=(W-44)/B;x.font='12px system-ui';bins.forEach((n,i)=>{const h=(H-34)*n/m;x.fillStyle=i<B/2?'rgb(220,60,60)':'rgb(46,160,90)';x.fillRect(36+i*bw+1,H-22-h,bw-2,h)});
+  x.fillStyle=mu;x.fillText('−1',30,H-6);x.fillText('0',W/2+10,H-6);x.fillText('+1',W-24,H-6)}}
+function paint(){const g=cur,d=D[g],s=SS[g];
+ document.querySelectorAll('[data-g]').forEach(b=>b.classList.toggle('on',b.dataset.g===g));
+ document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+ $('game').innerHTML=g==='ttt'?uiTtt():g==='nim'?uiNim():g==='c4'?uiC4():uiRps();
+ $('status').textContent=g==='rps'?s.msg:s.over?s.msg:s.busy?'KI denkt …':s.p===s.hp?'Du bist dran':'';
+ $('s1').textContent=d.st.w;$('s2').textContent=d.st.d;$('s3').textContent=d.st.l;$('info').textContent=INFO[g];
+ $('panel').innerHTML=panels[tab]();
+ if(tab==='d')$('raw').textContent=JSON.stringify(d.log.slice(-15),null,1);
+ if(tab==='m')$('src').textContent=$('modelcode').textContent.trim();
+ draw()}
+load();setTrain();newGame('ttt');newGame('nim');newGame('c4');applyTheme();paintTool();
+</script>
+<script>
+// Effekte: Partikelnetz (reagiert auf Zeiger), Aurora-Parallax und Einblenden beim Scrollen. Bei "reduzierte Bewegung" aus.
+(function(){const rm=matchMedia('(prefers-reduced-motion:reduce)').matches;if(rm)return;
+ const cv=document.getElementById('bg'),x=cv.getContext('2d');let W,H,dpr,P=[],mx=-999,my=-999,col='139,124,255',fr=0;
+ function size(){dpr=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;x.setTransform(dpr,0,0,dpr,0,0);
+  const n=Math.min(70,Math.round(W*H/16000));P=Array.from({length:n},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3}))}
+ addEventListener('resize',size);addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY},{passive:true});
+ function loop(){if(document.hidden){requestAnimationFrame(loop);return}
+  if(fr++%30===0){const c=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim();const m=c.match(/^#(..)(..)(..)$/);if(m)col=[1,2,3].map(i=>parseInt(m[i],16)).join(',')}
+  x.clearRect(0,0,W,H);
+  for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+   const dx=p.x-mx,dy=p.y-my,d=Math.hypot(dx,dy);if(d<110&&d>0){p.x+=dx/d*.6;p.y+=dy/d*.6}
+   x.fillStyle=`rgba(${col},.55)`;x.beginPath();x.arc(p.x,p.y,1.6,0,7);x.fill()}
+  x.lineWidth=1;
+  for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=`rgba(${col},${(1-d/120)*.28})`;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke()}}
+   const d=Math.hypot(P[i].x-mx,P[i].y-my);if(d<150){x.strokeStyle=`rgba(${col},${(1-d/150)*.5})`;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(mx,my);x.stroke()}}
+  requestAnimationFrame(loop)}
+ size();loop();
+ let t=0;addEventListener('scroll',()=>{if(!t)t=requestAnimationFrame(()=>{document.body.style.setProperty('--sy',scrollY);t=0})},{passive:true});
+ const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08});
+ document.querySelectorAll('main>*').forEach((el,i)=>{el.classList.add('rv');el.style.transitionDelay=Math.min(i,4)*40+'ms';io.observe(el)});
+})();
+</script>
+</body>
+</html>
